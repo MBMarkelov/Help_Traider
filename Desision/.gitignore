@@ -1,0 +1,89 @@
+# =========================
+# .NET build artifacts
+# =========================
+bin/
+obj/
+**/bin/
+**/obj/
+
+# =========================
+# .NET user-specific files
+# =========================
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+
+# =========================
+# Visual Studio / Rider / VS Code
+# =========================
+.vs/
+.idea/
+.vscode/
+
+# =========================
+# OS files
+# =========================
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# =========================
+# Logs
+# =========================
+*.log
+logs/
+**/logs/
+
+# =========================
+# Environment / secrets
+# =========================
+.env
+.env.*
+secrets.json
+**/secrets.json
+appsettings.*.json
+
+# =========================
+# Docker
+# =========================
+docker-data/
+**/docker-data/
+**/pgdata/
+**/tsdata/
+**/miniodata/
+
+# =========================
+# Docker override files
+# =========================
+docker-compose.override.yml
+
+# =========================
+# Temporary files
+# =========================
+*.tmp
+*.temp
+*.bak
+*.swp
+
+# =========================
+# Test results
+# =========================
+TestResults/
+coverage/
+*.coverage
+
+# =========================
+# NuGet
+# =========================
+*.nupkg
+packages/
+.nuget/
+
+# =========================
+# Publish output
+# =========================
+publish/
+**/publish/

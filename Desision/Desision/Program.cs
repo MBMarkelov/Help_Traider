@@ -1,39 +1,27 @@
-using System.Text.Json.Serialization;
+using Dapper;
+using Npgsql;
 
-var builder = WebApplication.CreateSlimBuilder(args);
-
-builder.AddServiceDefaults();
-
-builder.Services.ConfigureHttpJsonOptions(options =>
-{
-    options.SerializerOptions.TypeInfoResolverChain.Insert(0, AppJsonSerializerContext.Default);
-});
-
+var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 
-app.MapDefaultEndpoints();
+// Строка подключения (из docker-compose)
+string connectionString = "Host=localhost;Database=crypto_db;Username=admin;Password=secret1";
 
-var sampleTodos = new Todo[] {
-    new(1, "Walk the dog"),
-    new(2, "Do the dishes", DateOnly.FromDateTime(DateTime.Now)),
-    new(3, "Do the laundry", DateOnly.FromDateTime(DateTime.Now.AddDays(1))),
-    new(4, "Clean the bathroom"),
-    new(5, "Clean the car", DateOnly.FromDateTime(DateTime.Now.AddDays(2)))
-};
+app.MapGet("/api/candles/{symbol}", async (string symbol, int limit = 100) =>
+{
+    using var connection = new NpgsqlConnection(connectionString);
+    
+    // Запрос последних N свечей
+    var sql = @"SELECT time, symbol, open, high, low, close, volume 
+                FROM candles 
+                WHERE symbol = @symbol 
+                ORDER BY time DESC 
+                LIMIT @limit";
 
-var todosApi = app.MapGroup("/todos");
-todosApi.MapGet("/", () => sampleTodos);
-todosApi.MapGet("/{id}", (int id) =>
-    sampleTodos.FirstOrDefault(a => a.Id == id) is { } todo
-        ? Results.Ok(todo)
-        : Results.NotFound());
+    var candles = await connection.QueryAsync<CandleDto>(sql, new { symbol = symbol.ToUpper(), limit });
+    
+    // Возвращаем данные (Python легко их распарсит)
+    return Results.Ok(candles);
+});
 
 app.Run();
-
-public record Todo(int Id, string? Title, DateOnly? DueBy = null, bool IsComplete = false);
-
-[JsonSerializable(typeof(Todo[]))]
-internal partial class AppJsonSerializerContext : JsonSerializerContext
-{
-
-}

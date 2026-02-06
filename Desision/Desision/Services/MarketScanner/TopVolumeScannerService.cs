@@ -32,7 +32,7 @@ public sealed class TopVolumeScannerService : BackgroundService
                 continue;
             }
 
-            var summary = string.Join(", ", topSymbols.Select(item => $"{item.Symbol}:{item.Volume24h:F2}"));
+            var summary = string.Join(", ", topSymbols.Select(item => $"{item.Symbol}:{item.Volume:F2}"));
             _logger.LogInformation("Scanner snapshot (top {Count}): {Summary}", topSymbols.Count, summary);
         }
 

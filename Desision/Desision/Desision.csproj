@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="Bybit.Net" Version="6.2.1" />
+    <PackageReference Include="bybit.net.api" Version="1.2.1" />
     <PackageReference Include="Dapper" Version="2.1.66" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
     <PackageReference Include="Npgsql" Version="10.0.1" />

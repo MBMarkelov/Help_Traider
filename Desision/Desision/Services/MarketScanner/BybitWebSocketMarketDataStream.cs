@@ -1,17 +1,19 @@
+using bybit.net.api.WebSocketStream;
+using Desision.Services.MarketScanner;
+using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
 using System.Globalization;
-using System.Net.WebSockets;
-using System.Text;
 using System.Text.Json;
-using Microsoft.Extensions.Options;
-
-namespace Desision.Services.MarketScanner;
 
 public sealed class BybitWebSocketMarketDataStream : IBybitMarketDataStream
 {
     private readonly ILogger<BybitWebSocketMarketDataStream> _logger;
     private readonly MarketScannerOptions _options;
-    private readonly ConcurrentDictionary<string, decimal> _volumeBySymbol = new(StringComparer.OrdinalIgnoreCase);
+
+    private readonly ConcurrentDictionary<string, decimal> _volumeBySymbol =
+        new(StringComparer.OrdinalIgnoreCase);
+
+    private BybitSpotWebSocket? _webSocket;
 
     public BybitWebSocketMarketDataStream(
         IOptions<MarketScannerOptions> options,
@@ -23,128 +25,94 @@ public sealed class BybitWebSocketMarketDataStream : IBybitMarketDataStream
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Starting Bybit WebSocket stream: {Url}", _options.WebSocketUrl);
+        _logger.LogInformation("Starting Bybit Spot WebSocket market scanner");
 
-        using var socket = new ClientWebSocket();
-        await socket.ConnectAsync(new Uri(_options.WebSocketUrl), cancellationToken);
+        _webSocket = new BybitSpotWebSocket(
+            useTestNet: _options.UseTestNet,
+            pingIntevral: 5);
 
-        await SubscribeAsync(socket, cancellationToken);
-        await ReceiveLoopAsync(socket, cancellationToken);
+        _webSocket.OnMessageReceived(
+            async data =>
+            {
+                TryProcessTicker(data);
+                await Task.CompletedTask;
+            },
+            cancellationToken);
+
+        await _webSocket.ConnectAsync(
+            new[] { "tickers.BTCUSDT" },
+            cancellationToken);
     }
 
     public IReadOnlyCollection<MarketSymbolVolume> GetTopByVolume(int count)
     {
-        var snapshot = _volumeBySymbol
-            .OrderByDescending(pair => pair.Value)
+        return _volumeBySymbol
+            .OrderByDescending(x => x.Value)
             .Take(count)
-            .Select(pair => new MarketSymbolVolume(pair.Key, pair.Value))
+            .Select(x => new MarketSymbolVolume(x.Key, x.Value))
             .ToArray();
-
-        return snapshot;
     }
 
-    private async Task SubscribeAsync(ClientWebSocket socket, CancellationToken cancellationToken)
-    {
-        var payload = new
-        {
-            op = "subscribe",
-            args = _options.Topics,
-        };
-
-        var json = JsonSerializer.Serialize(payload);
-        var bytes = Encoding.UTF8.GetBytes(json);
-        await socket.SendAsync(bytes, WebSocketMessageType.Text, true, cancellationToken);
-    }
-
-    private async Task ReceiveLoopAsync(ClientWebSocket socket, CancellationToken cancellationToken)
-    {
-        var buffer = new byte[64 * 1024];
-
-        while (!cancellationToken.IsCancellationRequested && socket.State == WebSocketState.Open)
-        {
-            var result = await socket.ReceiveAsync(buffer, cancellationToken);
-            if (result.MessageType == WebSocketMessageType.Close)
-            {
-                _logger.LogWarning("Bybit WebSocket closed by server.");
-                break;
-            }
-
-            var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-            TryProcessMessage(message);
-        }
-    }
-
-    private void TryProcessMessage(string message)
+    private void TryProcessTicker(string rawMessage)
     {
         try
         {
-            using var document = JsonDocument.Parse(message);
-            if (!document.RootElement.TryGetProperty("data", out var dataElement))
-            {
-                return;
-            }
+            _logger.LogInformation("RAW WS MESSAGE: {Message}", rawMessage);
 
-            if (dataElement.ValueKind == JsonValueKind.Array)
+            using var doc = JsonDocument.Parse(rawMessage);
+
+            if (!doc.RootElement.TryGetProperty("data", out var data))
+                return;
+
+            if (data.ValueKind == JsonValueKind.Array)
             {
-                foreach (var entry in dataElement.EnumerateArray())
+                foreach (var ticker in data.EnumerateArray())
                 {
-                    TryUpdateVolume(entry);
+                    UpdateVolume(ticker);
                 }
-
-                return;
             }
-
-            if (dataElement.ValueKind == JsonValueKind.Object)
+            else if (data.ValueKind == JsonValueKind.Object)
             {
-                TryUpdateVolume(dataElement);
+                UpdateVolume(data);
             }
         }
-        catch (JsonException jsonException)
+        catch (Exception ex)
         {
-            _logger.LogDebug(jsonException, "Skipped non-JSON message from Bybit WebSocket.");
+            _logger.LogDebug(ex, "Failed to parse ticker message");
         }
     }
 
-    private void TryUpdateVolume(JsonElement entry)
+    private void UpdateVolume(JsonElement ticker)
     {
-        if (!entry.TryGetProperty("s", out var symbolElement))
-        {
+        if (!ticker.TryGetProperty("symbol", out var symbolElement))
             return;
-        }
 
         var symbol = symbolElement.GetString();
         if (string.IsNullOrWhiteSpace(symbol))
-        {
             return;
-        }
 
-        if (!TryReadDecimal(entry, "v", out var volume) &&
-            !TryReadDecimal(entry, "vol24h", out volume))
-        {
+        if (!TryReadDecimal(ticker, "turnover24h", out var volume))
             return;
-        }
 
         _volumeBySymbol[symbol] = volume;
     }
 
-    private static bool TryReadDecimal(JsonElement entry, string propertyName, out decimal value)
+    private static bool TryReadDecimal(JsonElement element, string property, out decimal value)
     {
         value = 0m;
-        if (!entry.TryGetProperty(propertyName, out var property))
-        {
+
+        if (!element.TryGetProperty(property, out var prop))
             return false;
-        }
 
-        if (property.ValueKind == JsonValueKind.Number && property.TryGetDecimal(out value))
+        return prop.ValueKind switch
         {
-            return true;
-        }
-
-        if (property.ValueKind == JsonValueKind.String)
-        {
-            return decimal.TryParse(property.GetString(), NumberStyles.Any, CultureInfo.InvariantCulture, out value);
-        }
-
-        return false;
+            JsonValueKind.Number => prop.TryGetDecimal(out value),
+            JsonValueKind.String => decimal.TryParse(
+                prop.GetString(),
+                NumberStyles.Any,
+                CultureInfo.InvariantCulture,
+                out value),
+            _ => false
+        };
     }
 }

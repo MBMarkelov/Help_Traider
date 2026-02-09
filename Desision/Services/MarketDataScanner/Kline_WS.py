@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from database.repository import OHLCRepository
+from Desision.database.repository import OHLCRepository
 
 class BybitKlineHandler:
     def __init__(self, repo: OHLCRepository, interval: str):

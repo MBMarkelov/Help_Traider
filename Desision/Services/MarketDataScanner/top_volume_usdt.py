@@ -1,8 +1,8 @@
 # top_volume_usdt.py
 from pybit.unified_trading import HTTP
 from typing import List
-from models import SymbolVolume
-from config import CATEGORY, TOP_N, STABLES
+from .models import SymbolVolume
+from .config import CATEGORY, TOP_N, STABLES
 
 class TopVolumeUSDTService:
     def __init__(self, testnet: bool = False):

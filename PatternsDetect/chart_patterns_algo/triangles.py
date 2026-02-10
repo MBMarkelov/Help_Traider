@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd 
 import plotly.graph_objects as go
 
-from pivot_points import find_all_pivot_points
+from PatternsDetect.chart_patterns_algo.pivot_points import find_all_pivot_points
 from scipy.stats import linregress
 from tqdm import tqdm
 
@@ -48,6 +48,7 @@ def find_triangle_pattern(ohlc: pd.DataFrame, lookback: int = 25, min_points: in
     ohlc["triangle_intercmax"]    = np.nan
     ohlc["triangle_high_idx"]     = [np.array([]) for _ in range(len(ohlc)) ]
     ohlc["triangle_low_idx"]      = [np.array([]) for _ in range(len(ohlc)) ]
+    ohlc["triangle_point"]        = 0
     
     
     # Find the pivot points

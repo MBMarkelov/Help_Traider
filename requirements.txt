@@ -8,6 +8,7 @@ pybit
 # Аналитика данных
 pandas==2.1.4
 numpy==1.24.3
+scipy
 
 # Конфигурация и логирование
 python-dotenv==1.0.0
@@ -27,3 +28,7 @@ python-dateutil==2.8.2
 pytest==7.4.3
 pytest-asyncio==0.21.1
 pytest-cov==4.1.0
+
+
+plotly
+tqdm

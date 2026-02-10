@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd 
 import plotly.graph_objects as go
 from scipy.stats import linregress
-from triangles import find_all_pivot_points, find_triangle_pattern
+from PatternsDetect.chart_patterns_algo.triangles import find_all_pivot_points, find_triangle_pattern
 
 
 def plot_triangle_pattern(ohlc, pattern_indices, triangle_type, title=""):

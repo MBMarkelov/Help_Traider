@@ -54,3 +54,15 @@ class OHLCError:
             "raw_data": self.raw_data,
             "timestamp": self.timestamp
         }
+    
+@dataclass
+class Kline:
+    symbol: str
+    interval: str
+    ts: datetime
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: float
+    turnover: float

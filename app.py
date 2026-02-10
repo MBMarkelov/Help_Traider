@@ -1,44 +1,56 @@
 # app.py
 import asyncio
-from datetime import datetime, timezone
-from Desision.database.connection import get_connection
 from Desision.database.repository import OHLCRepository
 from Desision.Services.MarketDataScanner.top_volume_usdt import TopVolumeUSDTService
-from Desision.Services.MarketDataScanner.Kline_WS import BybitKlineHandler
+from Desision.Services.MarketDataScanner.validate import KlineValidator, KlineNormalizer
+from Desision.Services.MarketDataScanner.persist import klines_to_rows
 
 BATCH_SIZE = 25
-INTERVAL = "60"  # часовые свечи
+INTERVAL = "60"
 
 async def main():
-    # 1. Подключаемся к БД
     repo = OHLCRepository()
 
-    # 2. Получаем топ-10 символов по объему
     top_service = TopVolumeUSDTService(testnet=False)
-    top_symbols = top_service.get_top_symbols()  # список SymbolVolume
-    top_symbols_str = [s.symbol for s in top_symbols]
-    print(f"Top symbols: {top_symbols_str}")
+    top_symbols = top_service.get_top_symbols()
+    symbols = [s.symbol for s in top_symbols]
 
-    # 3. Для каждого символа грузим свечи
-    kline_handler = BybitKlineHandler(repo=repo, interval=INTERVAL)
+    print(f"Top symbols: {symbols}")
 
-    for symbol in top_symbols_str:
+    for symbol in symbols:
         print(f"Fetching {INTERVAL} candles for {symbol}")
-        # Получаем свечи через HTTP API Bybit
-        data = top_service.session.get_kline(
-            symbol=symbol,
-            interval=INTERVAL,
-            limit=BATCH_SIZE
-        )
-        candles = data.get("result") or []
-        if not isinstance(candles, list):
-            print(f"Warning: unexpected kline format for {symbol}: {candles}")
+
+        try:
+            response = top_service.session.get_kline(
+                category="spot",
+                symbol=symbol,
+                interval=INTERVAL,
+                limit=BATCH_SIZE,
+            )
+        except Exception as e:
+            print(f"HTTP error for {symbol}: {e}")
             continue
 
-        msg = {"type": "snapshot", "topic": f"kline.{INTERVAL}.{symbol}", "data": candles}
-        kline_handler.on_message(msg)
+        raw = response.get("result", {}).get("list")
+        if not isinstance(raw, list):
+            print(f"Skipping {symbol}: invalid response format")
+            continue
 
-    print("Done!")
+        klines = KlineNormalizer.from_rest(
+            raw,
+            symbol=symbol,
+            interval=INTERVAL,
+        )
+
+        if not KlineValidator.validate(klines):
+            print(f"Skipping {symbol}: validation failed")
+            continue
+
+        rows = klines_to_rows(klines)
+        if rows:
+            repo.insert_ohlc(rows)
+
+    print("Done")
 
 if __name__ == "__main__":
     asyncio.run(main())

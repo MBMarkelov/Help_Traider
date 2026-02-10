@@ -34,3 +34,5 @@ class BybitKlineHandler:
 
         if rows:
             self.repo.insert_ohlc(rows)
+
+    

@@ -12,6 +12,7 @@ numpy==1.24.3
 # Конфигурация и логирование
 python-dotenv==1.0.0
 structlog==23.2.0
+logger
 
 # API сервер
 fastapi==0.104.1

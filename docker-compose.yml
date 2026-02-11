@@ -37,6 +37,8 @@ services:
       DB_NAME: market_data
       DB_USER: trader
       DB_PASSWORD: trader
+    volumes:
+      - ./cache:/app/cache
 
 volumes:
   timescale_data:

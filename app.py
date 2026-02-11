@@ -9,9 +9,9 @@ from Desision.Services.MarketDataScanner.persist import klines_to_rows
 from PatternsDetect.chart_patterns_algo.triangles import find_triangle_pattern, find_triangle_pattern
 from PatternsDetect.chart_patterns_algo.test_Tri import plot_triangle_pattern
 
-BATCH_SIZE = 10
+BATCH_SIZE = 1000
 INTERVAL = "60"
-OUTPUT_DIR = r"C:\Users\MB_Markelov_Nout\Documents\GitHub\Help_Traider\cache"
+OUTPUT_DIR = "./cache"
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -57,16 +57,14 @@ async def main():
         rows = klines_to_rows(klines)
         if rows:
             repo.insert_ohlc(rows)
-        ohlc_df = pd.DataFrame(rows).set_index('ts')
 
-            # --- Теперь анализируем паттерны ---
         ohlc_df = pd.DataFrame(rows).set_index('ts')
         if ohlc_df.empty:
             print(f"No OHLC data for {symbol}, skipping pattern detection")
             continue
 
         ohlc_df = pd.DataFrame(rows).reset_index()
-        ohlc_with_patterns = find_triangle_pattern(ohlc_df, triangle_type="ascending", lookback=25)
+        ohlc_with_patterns = find_triangle_pattern(ohlc_df, triangle_type="ascending", lookback=25, rlimit=0.7, slmax_limit=0.001, slmin_limit=0.001)
         pattern_indices = ohlc_with_patterns[ohlc_with_patterns.get("triangle_point", 0) > 0].index.tolist()
 
         if pattern_indices:

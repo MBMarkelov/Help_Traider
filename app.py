@@ -8,7 +8,7 @@ from Desision.Services.MarketDataScanner.validate import KlineValidator, KlineNo
 from Desision.Services.MarketDataScanner.persist import klines_to_rows
 from PatternsDetect.chart_patterns_algo.triangles import find_triangle_pattern
 from PatternsDetect.chart_patterns_algo.test_Tri import plot_triangle_pattern
-from PatternsDetect.YoloModule.dataset_utils import save_pattern_png, crop_window
+from PatternsDetect.YoloModule.dataset_utils import save_pattern_png
 
 
 BATCH_SIZE = 1000
@@ -125,7 +125,8 @@ async def main():
             html_path = os.path.join(OUTPUT_DIR, f"{symbol}_{triangle_type}.html")
             html_fig.write_html(html_path)
             print(f"Saved HTML for debug: {html_path}")
-
+            
+            # png
             save_pattern_png(
                 df=ohlc_with_patterns,
                 pattern_indices=pattern_indices,

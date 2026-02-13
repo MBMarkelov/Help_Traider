@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  timescaledb:
+    image: timescale/timescaledb:2.14.2-pg15
+    container_name: timescaledb
+    environment:
+      POSTGRES_DB: market_data
+      POSTGRES_USER: trader
+      POSTGRES_PASSWORD: trader
+    ports:
+      - "5433:5432"
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+      - ./Desision/database/migrations/init.sql:/docker-entrypoint-initdb.d/01_init.sql
+    healthcheck:
+      test: >
+        sh -c "
+        until psql -U trader -d market_data -c '\q' >/dev/null 2>&1; do
+          echo 'Waiting for database...';
+          sleep 2;
+        done
+        "
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: .
+    container_name: trading_app
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    environment:
+      DB_HOST: timescaledb
+      DB_PORT: 5432
+      DB_NAME: market_data
+      DB_USER: trader
+      DB_PASSWORD: trader
+    volumes:
+      - ./cache:/app/cache
+
+volumes:
+  timescale_data:

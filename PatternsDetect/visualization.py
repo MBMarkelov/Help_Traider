@@ -1,6 +1,6 @@
 import os
-from PatternsDetect.chart_patterns_algo.test_Tri import plot_triangle_pattern
-from PatternsDetect.YoloModule.dataset_utils import save_pattern_png
+from PatternsDetect.algo_detect_patterns_service.chart_patterns_algo_module.test_Tri import plot_triangle_pattern
+from PatternsDetect.yolo_detect_service.dataset_utils import save_pattern_png
 
 from config import OUTPUT_DIR
 os.makedirs(OUTPUT_DIR, exist_ok=True)

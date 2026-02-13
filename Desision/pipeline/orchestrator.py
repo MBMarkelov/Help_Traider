@@ -1,7 +1,6 @@
 from Desision.Services.MarketDataScanner.top_volume_usdt import get_top_symbols
 from Desision.Services.MarketDataScanner.data_loader import load_symbol_data
-from PatternsDetect.pattern_service import detect_triangles
-from PatternsDetect.visualization import save_outputs
+from PatternsDetect.algo_detect_patterns_service.registrator_patterns import get_registered_patterns
 from config import INTERVAL, TRIANGLE_TYPES
 
 class PatternPipeline:
@@ -19,15 +18,17 @@ class PatternPipeline:
             if df.empty:
                 continue
 
-            for triangle_type in self.triangle_types:
-                result = detect_triangles(df, triangle_type)
+            patterns = get_registered_patterns()
+
+            for pattern in patterns:
+
+                result = pattern.detect(df)
 
                 if not result.pattern_indices:
                     continue
 
-                save_outputs(
+                pattern.visualize(
                     df=result.df,
                     pattern_indices=result.pattern_indices,
-                    symbol=symbol,
-                    triangle_type=triangle_type
+                    symbol=symbol
                 )

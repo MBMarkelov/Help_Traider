@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd 
 import plotly.graph_objects as go
 
-from PatternsDetect.chart_patterns_algo.pivot_points import find_all_pivot_points
+from PatternsDetect.algo_detect_patterns_service.chart_patterns_algo_module.pivot_points import find_all_pivot_points
 from scipy.stats import linregress
 from tqdm import tqdm
 

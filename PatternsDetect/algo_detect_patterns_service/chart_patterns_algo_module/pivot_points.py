@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd 
 
 
-from PatternsDetect.chart_patterns_algo.utils import check_ohlc_names
+from PatternsDetect.algo_detect_patterns_service.chart_patterns_algo_module.utils import check_ohlc_names
 from tqdm import tqdm
 from typing import Union
 

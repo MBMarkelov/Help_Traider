@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pandas as pd 
 import plotly.graph_objects as go
-from PatternsDetect.chart_patterns_algo.triangles import find_triangle_pattern
+from PatternsDetect.algo_detect_patterns_service.chart_patterns_algo_module.triangles import find_triangle_pattern
 
 
 def plot_triangle_pattern(ohlc, pattern_indices, triangle_type, title=""):
@@ -86,4 +86,73 @@ def plot_triangle_pattern(ohlc, pattern_indices, triangle_type, title=""):
         height=700
     )
     
+    return fig
+
+def plot_flag_pattern(ohlc, pattern_indices, title=""):
+
+    fig = go.Figure()
+
+    # Свечи
+    fig.add_trace(go.Candlestick(
+        x=ohlc.index,
+        open=ohlc['open'],
+        high=ohlc['high'],
+        low=ohlc['low'],
+        close=ohlc['close'],
+        name='OHLC'
+    ))
+
+    for idx in pattern_indices:
+
+        if idx >= len(ohlc):
+            continue
+
+        highs_idx = ohlc.at[idx, "flag_highs_idx"]
+        lows_idx = ohlc.at[idx, "flag_lows_idx"]
+        slmax = ohlc.at[idx, "flag_slmax"]
+        slmin = ohlc.at[idx, "flag_slmin"]
+        intercmin = ohlc.at[idx, "flag_intercmin"]
+        intercmax = ohlc.at[idx, "flag_intercmax"]
+
+        if len(highs_idx) > 0:
+            x_line_high = np.array([highs_idx.min(), highs_idx.max()])
+            y_line_high = intercmax + slmax * x_line_high
+
+            fig.add_trace(go.Scatter(
+                x=x_line_high,
+                y=y_line_high,
+                mode='lines',
+                line=dict(color='red', width=2),
+                showlegend=False
+            ))
+
+        if len(lows_idx) > 0:
+            x_line_low = np.array([lows_idx.min(), lows_idx.max()])
+            y_line_low = intercmin + slmin * x_line_low
+
+            fig.add_trace(go.Scatter(
+                x=x_line_low,
+                y=y_line_low,
+                mode='lines',
+                line=dict(color='blue', width=2),
+                showlegend=False
+            ))
+
+        # точка паттерна
+        fig.add_trace(go.Scatter(
+            x=[idx],
+            y=[ohlc.loc[idx, 'close']],
+            mode='markers',
+            marker=dict(size=10),
+            showlegend=False
+        ))
+
+    fig.update_layout(
+        title=f"{title} - Flag Pattern",
+        xaxis_title='Index',
+        yaxis_title='Price',
+        xaxis_rangeslider_visible=False,
+        height=700
+    )
+
     return fig

@@ -1,24 +1,12 @@
 from dataclasses import dataclass
-from PatternsDetect.chart_patterns_algo.triangles import find_triangle_pattern
+from PatternsDetect.algo_detect_patterns_service.chart_patterns_algo_module.triangles import find_triangle_pattern
+from PatternsDetect.algo_detect_patterns_service.utils import suppress_nearby
 from config import WINDOW, LOOKBACK, MIN_GAP
 
 @dataclass
 class PatternResult:
     df: object
     pattern_indices: list
-
-def suppress_nearby(pattern_indices, min_gap=MIN_GAP):
-    if not pattern_indices:
-        return []
-
-    pattern_indices = sorted(pattern_indices)
-    filtered = [pattern_indices[0]]
-
-    for idx in pattern_indices[1:]:
-        if idx - filtered[-1] >= min_gap:
-            filtered.append(idx)
-
-    return filtered
 
 def detect_triangles(df, triangle_type):
 

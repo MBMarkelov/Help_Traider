@@ -2,7 +2,7 @@
 from pybit.unified_trading import HTTP
 from typing import List
 from .models import SymbolVolume
-from .config import CATEGORY, TOP_N, STABLES
+from config import CATEGORY, TOP_N, STABLES
 
 class TopVolumeUSDTService:
     def __init__(self, testnet: bool = False):
@@ -41,3 +41,8 @@ class TopVolumeUSDTService:
 
         usdt_pairs.sort(key=lambda x: x.turnover_24h, reverse=True)
         return usdt_pairs[:TOP_N]
+    
+def get_top_symbols():
+    service = TopVolumeUSDTService(testnet=False)
+    top_symbols = service.get_top_symbols()
+    return [s.symbol for s in top_symbols]

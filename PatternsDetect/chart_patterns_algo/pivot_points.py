@@ -118,12 +118,3 @@ def find_pivot_point_position(row: pd.Series) -> float:
         print(f"Error: {e}")
         return np.nan
     
-if __name__ == "__main__":
-    import os
-    # print(os.path.realpath('').split("\patterns")[0])
-    data = pd.read_csv(os.path.join(os.path.realpath('').split("\patterns")[0],"data","eurusd-4h.csv"))
-    
-    # print(find_all_pivot_points(data))
-    data = find_all_pivot_points(data)
-    display_pivot_points(data)
-    

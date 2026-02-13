@@ -156,3 +156,253 @@ def plot_flag_pattern(ohlc, pattern_indices, title=""):
     )
 
     return fig
+
+
+def plot_ihs_pattern(ohlc, pattern_indices, title=""):
+
+    fig = go.Figure()
+
+    # Свечи
+    fig.add_trace(go.Candlestick(
+        x=ohlc.index,
+        open=ohlc['open'],
+        high=ohlc['high'],
+        low=ohlc['low'],
+        close=ohlc['close'],
+        name='OHLC'
+    ))
+
+    for idx in pattern_indices:
+
+        if idx >= len(ohlc):
+            continue
+
+        ihs_idx = ohlc.at[idx, "ihs_idx"]
+        ihs_points = ohlc.at[idx, "ihs_point"]
+
+        if not ihs_idx or not ihs_points:
+            continue
+
+        # Ломаная линия (плечо-голова-плечо)
+        fig.add_trace(go.Scatter(
+            x=ihs_idx,
+            y=ihs_points,
+            mode="lines+markers",
+            line=dict(width=3),
+            marker=dict(size=8),
+            showlegend=False
+        ))
+
+        # Точка подтверждения
+        fig.add_trace(go.Scatter(
+            x=[idx],
+            y=[ohlc.loc[idx, "close"]],
+            mode="markers",
+            marker=dict(size=10),
+            showlegend=False
+        ))
+
+    fig.update_layout(
+        title=f"{title} - Inverse Head and Shoulders",
+        xaxis_title="Index",
+        yaxis_title="Price",
+        xaxis_rangeslider_visible=False,
+        height=700
+    )
+
+    return fig
+
+import numpy as np
+import plotly.graph_objects as go
+
+
+def plot_pennant_pattern(ohlc, pattern_indices, title=""):
+
+    fig = go.Figure()
+
+    # Свечной график
+    fig.add_trace(go.Candlestick(
+        x=ohlc.index,
+        open=ohlc['open'],
+        high=ohlc['high'],
+        low=ohlc['low'],
+        close=ohlc['close'],
+        name='OHLC'
+    ))
+
+    for idx in pattern_indices:
+
+        if idx >= len(ohlc):
+            continue
+
+        highs_idx = ohlc.at[idx, "pennant_highs_idx"]
+        lows_idx = ohlc.at[idx, "pennant_lows_idx"]
+
+        slmax = ohlc.at[idx, "pennant_slmax"]
+        slmin = ohlc.at[idx, "pennant_slmin"]
+        intercmax = ohlc.at[idx, "pennant_intercmax"]
+        intercmin = ohlc.at[idx, "pennant_intercmin"]
+
+        # Верхняя линия
+        if len(highs_idx) > 0:
+            x_high = np.array([highs_idx.min(), highs_idx.max()])
+            y_high = intercmax + slmax * x_high
+
+            fig.add_trace(go.Scatter(
+                x=x_high,
+                y=y_high,
+                mode="lines",
+                line=dict(width=2),
+                showlegend=False
+            ))
+
+        # Нижняя линия
+        if len(lows_idx) > 0:
+            x_low = np.array([lows_idx.min(), lows_idx.max()])
+            y_low = intercmin + slmin * x_low
+
+            fig.add_trace(go.Scatter(
+                x=x_low,
+                y=y_low,
+                mode="lines",
+                line=dict(width=2),
+                showlegend=False
+            ))
+
+        # Точка паттерна
+        fig.add_trace(go.Scatter(
+            x=[idx],
+            y=[ohlc.loc[idx, "close"]],
+            mode="markers",
+            marker=dict(size=10),
+            showlegend=False
+        ))
+
+    fig.update_layout(
+        title=f"{title} - Pennant",
+        xaxis_title="Index",
+        yaxis_title="Price",
+        xaxis_rangeslider_visible=False,
+        height=700
+    )
+
+    return fig
+
+import plotly.graph_objects as go
+import numpy as np
+
+
+def plot_head_and_shoulders_pattern(ohlc, pattern_indices, title=""):
+
+    fig = go.Figure()
+
+    # Свечи
+    fig.add_trace(go.Candlestick(
+        x=ohlc.index,
+        open=ohlc['open'],
+        high=ohlc['high'],
+        low=ohlc['low'],
+        close=ohlc['close'],
+        name='OHLC'
+    ))
+
+    for idx in pattern_indices:
+
+        if idx >= len(ohlc):
+            continue
+
+        hs_idx = ohlc.at[idx, "hs_idx"]
+        hs_vals = ohlc.at[idx, "hs_point"]
+
+        if len(hs_idx) != 5:
+            continue
+
+        # Соединяем точки фигуры
+        fig.add_trace(go.Scatter(
+            x=hs_idx,
+            y=hs_vals,
+            mode="lines+markers",
+            line=dict(width=3),
+            marker=dict(size=8),
+            showlegend=False
+        ))
+
+        # Neckline (через 2 минимума)
+        neckline_x = [hs_idx[1], hs_idx[3]]
+        neckline_y = [hs_vals[1], hs_vals[3]]
+
+        fig.add_trace(go.Scatter(
+            x=neckline_x,
+            y=neckline_y,
+            mode="lines",
+            line=dict(width=2, dash="dash"),
+            showlegend=False
+        ))
+
+    fig.update_layout(
+        title=f"{title} - Head and Shoulders",
+        xaxis_title="Index",
+        yaxis_title="Price",
+        xaxis_rangeslider_visible=False,
+        height=700
+    )
+
+    return fig
+
+
+def plot_double_pattern(ohlc, pattern_indices, title=""):
+
+    fig = go.Figure()
+
+    # Свечной график
+    fig.add_trace(go.Candlestick(
+        x=ohlc.index,
+        open=ohlc['open'],
+        high=ohlc['high'],
+        low=ohlc['low'],
+        close=ohlc['close'],
+        name='OHLC'
+    ))
+
+    for idx in pattern_indices:
+
+        if idx >= len(ohlc):
+            continue
+
+        double_idx = ohlc.at[idx, "double_idx"]
+        double_vals = ohlc.at[idx, "double_point"]
+
+        if len(double_idx) != 5:
+            continue
+
+        # Соединяем pivot точки
+        fig.add_trace(go.Scatter(
+            x=double_idx,
+            y=double_vals,
+            mode="lines+markers",
+            line=dict(width=3),
+            marker=dict(size=8),
+            showlegend=False
+        ))
+
+        # Линия уровня (между двумя вершинами или двумя минимумами)
+        if ohlc.at[idx, "double_type"] == "tops":
+            level = min(double_vals[1], double_vals[3])
+        else:
+            level = max(double_vals[1], double_vals[3])
+
+        fig.add_hline(
+            y=level,
+            line_width=2,
+            line_dash="dash"
+        )
+
+    fig.update_layout(
+        title=f"{title} - Double Pattern",
+        xaxis_title="Index",
+        yaxis_title="Price",
+        xaxis_rangeslider_visible=False,
+        height=700
+    )
+
+    return fig

@@ -1,8 +1,7 @@
 import numpy as np
 import pandas as pd 
 import plotly.graph_objects as go
-
-from pivot_points import find_all_pivot_points
+from PatternsDetect.algo_detect_patterns_service.chart_patterns_algo_module.pivot_points import find_all_pivot_points
 from tqdm import tqdm
 
 def find_doubles_pattern(ohlc: pd.DataFrame, lookback: int = 25, double: str = "tops", 
